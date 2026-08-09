@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartCity AI Live Complaint Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    header { display: flex; align-items: center; gap: 14px; padding: 12px 18px; background: #0f172a; color: white; }
+    button { border: 0; border-radius: 6px; padding: 9px 12px; font-weight: 700; cursor: pointer; }
+    button:disabled { cursor: wait; opacity: .7; }
+    #location-status { font-size: .9rem; color: #cbd5e1; }
+    #map { height: calc(100vh - 57px); }
+    .marker-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 1px 5px #333; }
+    .fire { background: #dc2626; } .pending { background: #eab308; } .resolved { background: #16a34a; } .default { background: #2563eb; }
+    .user-location { width: 16px; height: 16px; border-radius: 50%; background: #2563eb; border: 4px solid #bfdbfe; box-shadow: 0 0 0 3px rgba(37,99,235,.25); }
+    .notification { position: fixed; top: 10px; right: 10px; z-index: 1000; background: #333; color: #fff; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>SmartCity AI — Live Complaint Map</strong>
+    <button id="location-button" type="button">Use My Location</button>
+    <span id="location-status" aria-live="polite">Click the button to create a live location complaint.</span>
+  </header>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    // Change this after authentication is connected to the frontend.
+    const CURRENT_USER_ID = 1;
+    const map = L.map('map').setView([20.2961, 85.8245], 13);
+    const markers = new Map();
+    let userLocationMarker = null;
+    const locationButton = document.getElementById('location-button');
+    const locationStatus = document.getElementById('location-status');
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function markerClass(item) {
+      if (item.type === 'fire' || item.incident_type === 'fire') return 'fire';
+      if ((item.status || '').toLowerCase() === 'resolved') return 'resolved';
+      if ((item.status || '').toLowerCase() === 'pending') return 'pending';
+      return 'default';
+    }
+
+    function updateComplaintMarker(item) {
+      const lat = item.lat ?? item.latitude;
+      const lng = item.lng ?? item.longitude;
+      if (lat == null || lng == null) return;
+
+      const id = item.id ?? item.complaint_id;
+      const type = item.type ?? item.incident_type ?? 'general';
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="marker-dot ${markerClass({ ...item, type })}"></div>`,
+        iconSize: [24, 24]
+      });
+      const details = `<b>${type}</b><br>Status: ${item.status || 'Pending'}<br>Complaint #${id}`;
+
+      if (markers.has(id)) {
+        markers.get(id).setLatLng([lat, lng]).setIcon(icon).bindPopup(details);
+      } else {
+        markers.set(id, L.marker([lat, lng], { icon }).addTo(map).bindPopup(details));
+      }
+    }
+
+    function showUserLocation(lat, lng) {
+      const icon = L.divIcon({ className: '', html: '<div class="user-location"></div>', iconSize: [24, 24] });
+      if (userLocationMarker) {
+        userLocationMarker.setLatLng([lat, lng]);
+      } else {
+        userLocationMarker = L.marker([lat, lng], { icon }).addTo(map).bindPopup('You are here');
+      }
+      map.setView([lat, lng], 16);
+    }
+
+    function showNotification(message) {
+      const div = document.createElement('div');
+      div.className = 'notification';
+      div.innerText = `🔔 ${message}`;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 3000);
+    }
+
+    async function createLocationComplaint(lat, lng) {
+      const response = await fetch(`${API_BASE}/api/complaints`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'Live Complaint',
+          description: 'Auto detected location',
+          user_id: CURRENT_USER_ID,
+          latitude: lat,
+          longitude: lng
+        })
+      });
+
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || 'Could not save complaint');
+      updateComplaintMarker(body);
+      return body;
+    }
+
+    locationButton.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        locationStatus.textContent = 'This browser does not support GPS location.';
+        return;
+      }
+
+      locationButton.disabled = true;
+      locationStatus.textContent = 'Requesting your location…';
+      navigator.geolocation.getCurrentPosition(
+        async position => {
+          const { latitude, longitude } = position.coords;
+          showUserLocation(latitude, longitude);
+          try {
+            const complaint = await createLocationComplaint(latitude, longitude);
+            locationStatus.textContent = `Complaint #${complaint.complaint_id} saved at your current location.`;
+          } catch (error) {
+            locationStatus.textContent = error.message;
+          } finally {
+            locationButton.disabled = false;
+          }
+        },
+        error => {
+          locationStatus.textContent = `Location unavailable: ${error.message}`;
+          locationButton.disabled = false;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+      );
+    });
+
+    fetch(`${API_BASE}/complaints/map`)
+      .then(response => response.json())
+      .then(items => items.forEach(updateComplaintMarker))
+      .catch(error => console.error('Map data failed:', error));
+
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws/complaints');
+    socket.onmessage = event => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'new_complaint' || message.type === 'complaint_status_updated') {
+        updateComplaintMarker(message.data);
+      }
+    };
+    socket.onerror = error => console.error('WebSocket error:', error);
+
+    const notificationSocket = new WebSocket('ws://127.0.0.1:8000/ws/notifications');
+    notificationSocket.onmessage = event => {
+      const data = JSON.parse(event.data);
+      showNotification(data.message);
+    };
+    notificationSocket.onerror = error => console.error('Notification WebSocket error:', error);
+  </script>
+</body>
+</html>

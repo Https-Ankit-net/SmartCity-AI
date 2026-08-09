@@ -1,36 +1,32 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, TIMESTAMP, text
-from sqlalchemy.orm import relationship
+from __future__ import annotations
 
-from app.db.base import Base
+from datetime import datetime
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.database import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(Integer, primary_key=True, index=True)
-
-    full_name = Column(String(100), nullable=False)
-
-    email = Column(String(100), unique=True, nullable=False)
-
-    password_hash = Column(String(255), nullable=False)
-
-    phone = Column(String(20), unique=True)
-
-    role = Column(String(20), nullable=False)
-
-    department_id = Column(
-        Integer,
-        ForeignKey("departments.department_id"),
-        nullable=True
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    email: Mapped[str] = mapped_column(String(150), unique=True, index=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True, nullable=True)
+    role: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="citizen", server_default="citizen"
+    )
+    department_id: Mapped[int | None] = mapped_column(
+        ForeignKey("departments.department_id"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    created_at = Column(
-        TIMESTAMP,
-        server_default=text("CURRENT_TIMESTAMP")
-    )
-
-    department = relationship(
-        "Department",
-        back_populates="users"
+    department: Mapped[Department | None] = relationship(back_populates="users")
+    complaints: Mapped[list[Complaint]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )

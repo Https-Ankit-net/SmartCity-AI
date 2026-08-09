@@ -1,5 +1,6 @@
-from sqlalchemy.orm import DeclarativeBase
+"""Compatibility module that registers all ORM models."""
 
+from app.db.database import Base
+from app.models import Complaint, Department, User
 
-class Base(DeclarativeBase):
-    pass
+__all__ = ["Base", "Complaint", "Department", "User"]
