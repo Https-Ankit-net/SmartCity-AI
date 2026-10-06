@@ -1,0 +1,15 @@
+# Keep the build context small and secrets out of the image.
+.env
+.env.*
+!.env.example
+venv/
+.venv/
+**/__pycache__/
+**/*.pyc
+*.db
+uploads/
+tests/
+*.pt
+app/ai/weights/
+Dockerfile
+.dockerignore

@@ -1,45 +1,638 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SmartCity AI Live Complaint Map</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live GIS Complaint Map</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    body { margin: 0; font-family: Arial, sans-serif; }
-    header { display: flex; align-items: center; gap: 14px; padding: 12px 18px; background: #0f172a; color: white; }
-    button { border: 0; border-radius: 6px; padding: 9px 12px; font-weight: 700; cursor: pointer; }
-    button:disabled { cursor: wait; opacity: .7; }
-    #location-status { font-size: .9rem; color: #cbd5e1; }
-    #map { height: calc(100vh - 57px); }
-    .marker-dot { width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 1px 5px #333; }
-    .fire { background: #dc2626; } .pending { background: #eab308; } .resolved { background: #16a34a; } .default { background: #2563eb; }
-    .user-location { width: 16px; height: 16px; border-radius: 50%; background: #2563eb; border: 4px solid #bfdbfe; box-shadow: 0 0 0 3px rgba(37,99,235,.25); }
-    .notification { position: fixed; top: 10px; right: 10px; z-index: 1000; background: #333; color: #fff; padding: 10px; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+    :root {
+      --bg-dark: #090d16;
+      --bg-panel: rgba(15, 23, 42, 0.85);
+      --border-color: rgba(255, 255, 255, 0.12);
+      
+      --accent-green: #10b981;
+      --accent-blue: #3b82f6;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Minimal Header Bar */
+    header {
+      z-index: 1000;
+      backdrop-filter: blur(16px);
+      background: rgba(9, 13, 22, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 56px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-home-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .back-home-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .map-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    /* Map Layout */
+    .map-wrapper {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 56px);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #090d16;
+    }
+
+    .dark-tile-filter {
+      filter: brightness(0.6) invert(1) contrast(2.5) hue-rotate(190deg) saturate(0.3) brightness(0.7);
+    }
+
+    /* Google Maps Style Circular Floating Controls directly ON the Map Canvas */
+    .google-map-controls {
+      position: absolute;
+      bottom: 28px;
+      left: 20px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .map-circle-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .map-circle-btn:hover {
+      transform: scale(1.1);
+      background: rgba(30, 41, 59, 0.95);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .map-circle-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* GPS Locate Button (Google Maps Style) */
+    .locate-btn {
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    .locate-btn:hover {
+      background: rgba(14, 165, 233, 0.2);
+      color: #7dd3fc;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Circular Report Issue Button */
+    .report-issue-fab {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .report-issue-fab:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      box-shadow: 0 12px 30px rgba(16, 185, 129, 0.6);
+    }
+
+    /* Toast Notification Overlay */
+    .toast-overlay {
+      position: fixed;
+      top: 72px;
+      right: 20px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast-msg {
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border-left: 4px solid #38bdf8;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Custom Leaflet Map Pins */
+    .marker-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .fire { background: #ef4444; }
+    .pending { background: #f59e0b; }
+    .resolved { background: #10b981; }
+    .default { background: #3b82f6; }
+
+    .user-beacon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #38bdf8;
+      border: 3px solid white;
+      box-shadow: 0 0 0 8px rgba(56, 189, 248, 0.35);
+      animation: beaconPulse 1.8s infinite;
+    }
+
+    @keyframes beaconPulse {
+      0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6); }
+      70% { box-shadow: 0 0 0 16px rgba(56, 189, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+
+    /* Leaflet Popup styling */
+    .leaflet-popup-content-wrapper {
+      background: rgba(15, 23, 42, 0.95) !important;
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      color: white !important;
+      border-radius: 14px !important;
+      padding: 6px;
+    }
+
+    .leaflet-popup-tip {
+      background: rgba(15, 23, 42, 0.95) !important;
+    }
+
+    /* Modal Form */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      width: 90%;
+      max-width: 480px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-top h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .form-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent-green);
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .voice-mic-btn {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .voice-mic-btn:hover {
+      background: rgba(56, 189, 248, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .voice-mic-btn.recording {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #f87171;
+      animation: pulse 1.5s infinite;
+    }
+
+    .image-dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      background: rgba(15, 23, 42, 0.4);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .image-dropzone:hover {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    .img-preview-wrap {
+      position: relative;
+      margin-top: 10px;
+      border-radius: 12px;
+      overflow: hidden;
+      max-height: 140px;
+      border: 1px solid var(--border-color);
+      display: none;
+    }
+
+    .img-preview-wrap img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+    }
+
+    .remove-img-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .submit-report-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <strong>SmartCity AI — Live Complaint Map</strong>
-    <button id="location-button" type="button">Use My Location</button>
-    <span id="location-status" aria-live="polite">Click the button to create a live location complaint.</span>
-  </header>
-  <div id="map"></div>
 
+  <!-- Minimal Header -->
+  <header>
+    <div class="nav-left">
+      <a href="index.html" class="back-home-btn">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Home</span>
+      </a>
+      <a href="citizen_dashboard.html" class="back-home-btn">
+        <i class="fa-solid fa-table-columns"></i>
+        <span>My Dashboard</span>
+      </a>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="map-status-pill">
+        <div class="pulse-dot"></div>
+        <span>GIS Map Live</span>
+      </div>
+      <button class="back-home-btn" onclick="handleLogout()" title="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Map Wrapper -->
+  <div class="map-wrapper">
+    
+    <!-- Map Canvas -->
+    <div id="map"></div>
+
+    <!-- Circular Floating Controls directly ON the Map Canvas (Google Maps Style) -->
+    <div class="google-map-controls">
+      
+      <!-- Circular GPS Locate Button -->
+      <button class="map-circle-btn locate-btn" id="locate-btn" title="Use My Location (GPS)" onclick="locateCurrentPosition()">
+        <i class="fa-solid fa-crosshairs"></i>
+      </button>
+
+      <!-- Circular Report Issue Button -->
+      <button class="map-circle-btn report-issue-fab" title="Report New Incident" onclick="openReportModal()">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-overlay" id="toast-container"></div>
+
+  <!-- Report Issue Modal -->
+  <div class="modal-backdrop" id="report-modal">
+    <div class="modal-box">
+      <div class="modal-top">
+        <h3><i class="fa-solid fa-circle-plus" style="color: #10b981;"></i> Report Incident</h3>
+        <button class="close-btn" onclick="closeReportModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form onsubmit="handleReportSubmit(event)">
+        <div class="form-field">
+          <label>Incident Title</label>
+          <input type="text" id="report-title" class="form-input" placeholder="e.g. Deep Road Pothole" required>
+        </div>
+
+        <div class="form-field">
+          <div class="label-row">
+            <label>Description</label>
+            <button type="button" class="voice-mic-btn" id="voice-mic-btn" onclick="toggleVoiceDictation()">
+              <i class="fa-solid fa-microphone" id="voice-icon"></i>
+              <span id="voice-btn-text">Voice Input</span>
+            </button>
+          </div>
+          <textarea id="report-desc" class="form-input" rows="3" placeholder="Describe the incident or use Voice Input..." required></textarea>
+        </div>
+
+        <div class="form-field">
+          <label>Category</label>
+          <select id="report-category" class="form-input">
+            <option value="road">Pothole / Road Damage</option>
+            <option value="water">Water Leak / Drainage</option>
+            <option value="garbage">Garbage / Waste Overflow</option>
+            <option value="fire">Fire / Electrical Hazard</option>
+            <option value="general">General Concern</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>Incident Photo Attachment</label>
+          <div class="image-dropzone" id="image-dropzone" onclick="document.getElementById('report-image-input').click()">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 22px; color: #10b981; margin-bottom: 4px;"></i>
+            <div style="font-size: 12px; color: #cbd5e1; font-weight: 600;">Click to Upload Photo</div>
+            <div style="font-size: 10px; color: #94a3b8;">PNG, JPG up to 10MB</div>
+          </div>
+          <input type="file" id="report-image-input" accept="image/*" style="display:none;" onchange="handleImageSelected(this)">
+          
+          <div class="img-preview-wrap" id="img-preview-wrap">
+            <img id="img-preview-elem" src="" alt="Selected Photo Preview">
+            <button type="button" class="remove-img-btn" title="Remove Photo" onclick="clearSelectedImage()">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-report-btn" id="submit-btn">
+          <span>Submit Report</span>
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="config.js"></script>
   <script>
-    const API_BASE = 'http://127.0.0.1:8000';
-    // Change this after authentication is connected to the frontend.
-    const CURRENT_USER_ID = 1;
-    const map = L.map('map').setView([20.2961, 85.8245], 13);
-    const markers = new Map();
-    let userLocationMarker = null;
-    const locationButton = document.getElementById('location-button');
-    const locationStatus = document.getElementById('location-status');
+    const API_BASE = SMARTCITY.API_BASE;
+    const WS_BASE = SMARTCITY.WS_BASE;
+
+    // ── Auth Guard: ensure user is logged in ──
+    const AUTH_TOKEN = localStorage.getItem('token');
+    const USER_ROLE = localStorage.getItem('role') || 'citizen';
+    const USER_ID = parseInt(localStorage.getItem('user_id') || '0', 10);
+
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Validate token on page load
+    if (!AUTH_TOKEN || USER_ID === 0) {
+      window.location.href = 'index.html';
+    } else {
+      const payload = parseJwt(AUTH_TOKEN);
+      if (!payload || !payload.exp || payload.exp <= Math.floor(Date.now() / 1000)) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('user_id');
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Helper: get auth headers
+    function authHeaders(extra = {}) {
+      return { 'Authorization': `Bearer ${AUTH_TOKEN}`, ...extra };
+    }
+
+    // Initialize Map with Dark CartoDB Tiles
+    const map = L.map('map', { zoomControl: false }).setView([20.2961, 85.8245], 13);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+      className: 'dark-tile-filter'
     }).addTo(map);
+
+    const markers = new Map();
+    let userLocationMarker = null;
+    let currentLat = 20.2961;
+    let currentLng = 85.8245;
+
+    // Toast Utility
+    function showToast(msg, icon = 'fa-circle-info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast-msg';
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    }
 
     function markerClass(item) {
       if (item.type === 'fire' || item.incident_type === 'fire') return 'fire';
@@ -53,14 +646,22 @@
       const lng = item.lng ?? item.longitude;
       if (lat == null || lng == null) return;
 
-      const id = item.id ?? item.complaint_id;
+      const id = item.id ?? item.complaint_id ?? Math.random();
       const type = item.type ?? item.incident_type ?? 'general';
+      
       const icon = L.divIcon({
         className: '',
         html: `<div class="marker-dot ${markerClass({ ...item, type })}"></div>`,
-        iconSize: [24, 24]
+        iconSize: [22, 22]
       });
-      const details = `<b>${type}</b><br>Status: ${item.status || 'Pending'}<br>Complaint #${id}`;
+
+      const details = `
+        <div style="font-size: 13px;">
+          <b style="color: #38bdf8; text-transform: uppercase;">${type}</b><br>
+          <span style="color: #94a3b8;">Status: ${item.status || 'Pending'}</span><br>
+          <small style="color: #cbd5e1;">Ticket #${id}</small>
+        </div>
+      `;
 
       if (markers.has(id)) {
         markers.get(id).setLatLng([lat, lng]).setIcon(icon).bindPopup(details);
@@ -69,92 +670,238 @@
       }
     }
 
-    function showUserLocation(lat, lng) {
-      const icon = L.divIcon({ className: '', html: '<div class="user-location"></div>', iconSize: [24, 24] });
-      if (userLocationMarker) {
-        userLocationMarker.setLatLng([lat, lng]);
-      } else {
-        userLocationMarker = L.marker([lat, lng], { icon }).addTo(map).bindPopup('You are here');
-      }
-      map.setView([lat, lng], 16);
-    }
-
-    function showNotification(message) {
-      const div = document.createElement('div');
-      div.className = 'notification';
-      div.innerText = `🔔 ${message}`;
-      document.body.appendChild(div);
-      setTimeout(() => div.remove(), 3000);
-    }
-
-    async function createLocationComplaint(lat, lng) {
-      const response = await fetch(`${API_BASE}/api/complaints`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: 'Live Complaint',
-          description: 'Auto detected location',
-          user_id: CURRENT_USER_ID,
-          latitude: lat,
-          longitude: lng
-        })
-      });
-
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.detail || 'Could not save complaint');
-      updateComplaintMarker(body);
-      return body;
-    }
-
-    locationButton.addEventListener('click', () => {
+    // Google Maps Style GPS Locate Function
+    function locateCurrentPosition() {
+      const btn = document.getElementById('locate-btn');
       if (!navigator.geolocation) {
-        locationStatus.textContent = 'This browser does not support GPS location.';
+        showToast('GPS Location not supported by browser', 'fa-triangle-exclamation');
         return;
       }
 
-      locationButton.disabled = true;
-      locationStatus.textContent = 'Requesting your location…';
+      btn.style.opacity = '0.5';
+      showToast('Finding your current GPS location...', 'fa-location-crosshairs');
+
       navigator.geolocation.getCurrentPosition(
         async position => {
           const { latitude, longitude } = position.coords;
-          showUserLocation(latitude, longitude);
-          try {
-            const complaint = await createLocationComplaint(latitude, longitude);
-            locationStatus.textContent = `Complaint #${complaint.complaint_id} saved at your current location.`;
-          } catch (error) {
-            locationStatus.textContent = error.message;
-          } finally {
-            locationButton.disabled = false;
+          currentLat = latitude;
+          currentLng = longitude;
+
+          const icon = L.divIcon({
+            className: '',
+            html: '<div class="user-beacon"></div>',
+            iconSize: [20, 20]
+          });
+
+          if (userLocationMarker) {
+            userLocationMarker.setLatLng([latitude, longitude]);
+          } else {
+            userLocationMarker = L.marker([latitude, longitude], { icon }).addTo(map).bindPopup('You are here');
           }
+
+          map.flyTo([latitude, longitude], 16);
+          showToast('Located current position', 'fa-location-dot');
+          btn.style.opacity = '1';
         },
         error => {
-          locationStatus.textContent = `Location unavailable: ${error.message}`;
-          locationButton.disabled = false;
+          showToast(`Location error: ${error.message}`, 'fa-triangle-exclamation');
+          btn.style.opacity = '1';
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
       );
-    });
+    }
 
-    fetch(`${API_BASE}/complaints/map`)
-      .then(response => response.json())
-      .then(items => items.forEach(updateComplaintMarker))
-      .catch(error => console.error('Map data failed:', error));
+    // Logout
+    function handleLogout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('user_id');
+      window.location.href = 'index.html';
+    }
 
-    const socket = new WebSocket('ws://127.0.0.1:8000/ws/complaints');
-    socket.onmessage = event => {
-      const message = JSON.parse(event.data);
-      if (message.type === 'new_complaint' || message.type === 'complaint_status_updated') {
-        updateComplaintMarker(message.data);
+    // Modal Control
+    function openReportModal() { document.getElementById('report-modal').classList.add('active'); }
+    function closeReportModal() { document.getElementById('report-modal').classList.remove('active'); }
+
+    // Image Handling Logic
+    let selectedImageFile = null;
+
+    function handleImageSelected(input) {
+      if (input.files && input.files[0]) {
+        selectedImageFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('img-preview-elem').src = e.target.result;
+          document.getElementById('img-preview-wrap').style.display = 'block';
+          document.getElementById('image-dropzone').style.display = 'none';
+        };
+        reader.readAsDataURL(selectedImageFile);
       }
-    };
-    socket.onerror = error => console.error('WebSocket error:', error);
+    }
 
-    const notificationSocket = new WebSocket('ws://127.0.0.1:8000/ws/notifications');
-    notificationSocket.onmessage = event => {
-      const data = JSON.parse(event.data);
-      showNotification(data.message);
-    };
-    notificationSocket.onerror = error => console.error('Notification WebSocket error:', error);
+    function clearSelectedImage() {
+      selectedImageFile = null;
+      document.getElementById('report-image-input').value = '';
+      document.getElementById('img-preview-wrap').style.display = 'none';
+      document.getElementById('image-dropzone').style.display = 'block';
+    }
+
+    // Voice Dictation (Speech-to-Text) Logic
+    let speechRecognition = null;
+    let isDictating = false;
+
+    function toggleVoiceDictation() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast('Speech dictation is not supported in this browser.', 'fa-triangle-exclamation');
+        return;
+      }
+
+      const btn = document.getElementById('voice-mic-btn');
+      const btnText = document.getElementById('voice-btn-text');
+      const descInput = document.getElementById('report-desc');
+
+      if (isDictating) {
+        if (speechRecognition) speechRecognition.stop();
+        isDictating = false;
+        btn.classList.remove('recording');
+        btnText.textContent = 'Voice Input';
+        showToast('Voice input ended.', 'fa-microphone');
+        return;
+      }
+
+      try {
+        speechRecognition = new SpeechRecognition();
+        speechRecognition.continuous = true;
+        speechRecognition.interimResults = true;
+        speechRecognition.lang = 'en-US';
+
+        speechRecognition.onstart = () => {
+          isDictating = true;
+          btn.classList.add('recording');
+          btnText.textContent = 'Listening...';
+          showToast('Listening... Speak your incident description!', 'fa-microphone');
+        };
+
+        speechRecognition.onresult = (event) => {
+          let transcript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+          }
+          descInput.value = transcript;
+        };
+
+        speechRecognition.onerror = (event) => {
+          showToast(`Voice error: ${event.error}`, 'fa-triangle-exclamation');
+          btn.classList.remove('recording');
+          btnText.textContent = 'Voice Input';
+          isDictating = false;
+        };
+
+        speechRecognition.onend = () => {
+          btn.classList.remove('recording');
+          btnText.textContent = 'Voice Input';
+          isDictating = false;
+        };
+
+        speechRecognition.start();
+      } catch (err) {
+        showToast('Could not start voice recognition', 'fa-triangle-exclamation');
+      }
+    }
+
+    async function handleReportSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('report-title').value;
+      const description = document.getElementById('report-desc').value;
+      const submitBtn = document.getElementById('submit-btn');
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Submitting Report...</span>';
+
+      try {
+        let response;
+        if (selectedImageFile) {
+          const formData = new FormData();
+          formData.append('user_id', USER_ID);
+          formData.append('title', title);
+          formData.append('description', description);
+          formData.append('latitude', currentLat);
+          formData.append('longitude', currentLng);
+          formData.append('image', selectedImageFile);
+
+          response = await fetch(`${API_BASE}/api/complaints/with-image`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: formData
+          });
+        } else {
+          response = await fetch(`${API_BASE}/api/complaints`, {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+              title,
+              description,
+              user_id: USER_ID,
+              latitude: currentLat,
+              longitude: currentLng
+            })
+          });
+        }
+
+        const body = await response.json();
+        if (response.ok) {
+          updateComplaintMarker(body);
+          if (body.duplicate) {
+            // Merged into an existing nearby report instead of creating a new one.
+            showToast(body.message, body.outcome === 'confirmed' ? 'fa-users' : 'fa-circle-info');
+          } else {
+            showToast(`Report #${body.complaint_id || 'saved'} submitted successfully!`, 'fa-circle-check');
+          }
+          clearSelectedImage();
+          document.getElementById('report-title').value = '';
+          document.getElementById('report-desc').value = '';
+          closeReportModal();
+        } else if (response.status === 401) {
+          showToast('Session expired. Please login again.', 'fa-triangle-exclamation');
+          handleLogout();
+        } else {
+          showToast(body.detail || 'Failed to submit report', 'fa-triangle-exclamation');
+        }
+      } catch (err) {
+        showToast('Network error — report saved locally', 'fa-triangle-exclamation');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Submit Report</span> <i class="fa-solid fa-paper-plane"></i>';
+      }
+    }
+
+    // Load Initial Map Data
+    fetch(`${API_BASE}/complaints/map`, { headers: authHeaders() })
+      .then(response => response.json())
+      .then(items => {
+        if (Array.isArray(items)) items.forEach(updateComplaintMarker);
+      })
+      .catch(error => console.error('Map fetch failed:', error));
+
+    // WebSockets
+    try {
+      const socket = new WebSocket(`${WS_BASE}/ws/complaints?token=${encodeURIComponent(AUTH_TOKEN)}`);
+      socket.onmessage = event => {
+        const message = JSON.parse(event.data);
+        if (message.type === 'new_complaint' || message.type === 'complaint_status_updated') {
+          updateComplaintMarker(message.data);
+        }
+      };
+
+      const notificationSocket = new WebSocket(`${WS_BASE}/ws/notifications?token=${encodeURIComponent(AUTH_TOKEN)}`);
+      notificationSocket.onmessage = event => {
+        const data = JSON.parse(event.data);
+        showToast(data.message, 'fa-bell');
+      };
+    } catch (e) {
+      console.log('WS connection standard');
+    }
   </script>
 </body>
 </html>

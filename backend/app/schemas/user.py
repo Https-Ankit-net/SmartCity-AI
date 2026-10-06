@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class UserBase(BaseModel):
@@ -11,8 +11,21 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(min_length=8, max_length=255)
+    password: str = Field(min_length=8, max_length=72)
     department_id: int | None = None
+
+    @field_validator("email")
+    @classmethod
+    def normalise_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+    @field_validator("password")
+    @classmethod
+    def bcrypt_limit(cls, value: str) -> str:
+        # bcrypt ignores everything past 72 bytes; refuse rather than silently truncate.
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 bytes")
+        return value
 
 
 class UserResponse(UserBase):
@@ -21,4 +34,5 @@ class UserResponse(UserBase):
 
     user_id: int
     department_id: int | None
+    account_status: str = "active"
     created_at: datetime

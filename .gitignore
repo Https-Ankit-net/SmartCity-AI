@@ -3,3 +3,34 @@ __pycache__/
 .venv/
 .vscode/
 .env
+datasets/
+runs/
+backend/app/ai/weights/*.pt
+*.onnx
+
+# Environments and secrets
+venv/
+backend/venv/
+.env.*
+!.env.example
+
+# Local data (new uploads and SQLite databases stay out of git)
+*.db
+*.sqlite3
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Frontend tooling
+node_modules/
+frontend/dist/
+
+# Test / tooling output
+.pytest_cache/
+test-results.xml
+
+# Academic paperwork (presentation, reports, SOPs, meeting sheets) stays out of git
+/*.pptx
+/*.docx
+/*.xlsx
+# Ultralytics downloads weights into the working directory
+/*.pt

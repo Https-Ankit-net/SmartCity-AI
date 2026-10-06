@@ -1,0 +1,35 @@
+# SmartCity-AI civic issue detection dataset (YOLO format), used by scripts/train_yolo.py.
+#
+# Expected layout (one .txt label per image, same file stem):
+#
+#   datasets/civic/
+#     images/
+#       train/  street_001.jpg  street_002.jpg ...
+#       val/    street_101.jpg ...
+#       test/   (optional)
+#     labels/
+#       train/  street_001.txt  street_002.txt ...
+#       val/    street_101.txt ...
+#       test/   (optional)
+#
+# Each label line is "<class_id> <x_center> <y_center> <width> <height>", with the four box
+# values normalised to [0, 1] by the image width/height. An empty or missing label file means
+# the image is a background image (no objects); that is allowed and reported by the script.
+#
+# Path resolution: train_yolo.py resolves a relative `path:` against THIS file's folder
+# (so ../datasets/civic means <repo>/datasets/civic), then train/val/test against `path:`.
+# It hands Ultralytics a copy with absolute paths, because Ultralytics itself would resolve a
+# relative `path:` against its own `datasets_dir` setting. If you call `yolo train` directly
+# with this file, make `path:` absolute first.
+
+path: ../datasets/civic # dataset root
+train: images/train # training images, relative to path
+val: images/val # validation images, relative to path
+# test: images/test # optional held-out images
+
+# Class order is fixed: the backend maps these names to complaint categories.
+names:
+  0: pothole
+  1: overflowing_trash
+  2: streetlight_failure
+  3: fallen_tree

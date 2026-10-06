@@ -9,6 +9,8 @@ RULES = (
     (("water leak", "waterlogging", "sewage", "drain", "pipeline"), "water", "Medium", "Water Department"),
     (("electric", "power", "wire", "transformer"), "electrical", "High", "Electrical Department"),
     (("pothole", "road damage", "broken road"), "road", "Medium", "Public Works Department"),
+    (("fallen tree", "tree fell", "tree has fallen", "uprooted"), "road", "Medium", "Public Works Department"),
+    (("streetlight", "street light", "lamp post", "light not working"), "electrical", "Medium", "Electrical Department"),
 )
 
 IMAGE_RULES = {
@@ -17,6 +19,11 @@ IMAGE_RULES = {
     "truck": ("accident", "Medium", "Traffic Police"),
     "motorcycle": ("accident", "Medium", "Traffic Police"),
     "fire hydrant": ("fire", "High", "Fire Services"),
+    # Classes from the fine-tuned civic model (scripts/train_yolo.py).
+    "pothole": ("road", "Medium", "Public Works Department"),
+    "overflowing_trash": ("garbage", "Medium", "Sanitation Department"),
+    "streetlight_failure": ("electrical", "Medium", "Electrical Department"),
+    "fallen_tree": ("road", "Medium", "Public Works Department"),
 }
 
 

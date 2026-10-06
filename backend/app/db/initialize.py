@@ -1,9 +1,11 @@
-"""Create tables and apply the small additive schema upgrades used by this project."""
+"""Schema migrations (Alembic) and default department seeding, run at startup."""
 
-from sqlalchemy import inspect, text
+import os
+
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.db.database import Base, engine
+from app.db.migrate import run_migrations
 from app.db.session import SessionLocal
 from app.models.department import Department
 
@@ -18,22 +20,13 @@ DEFAULT_DEPARTMENTS = (
 )
 
 
-def initialize_database() -> None:
-    Base.metadata.create_all(bind=engine)
-
-    if engine.dialect.name == "postgresql":
-        existing_columns = {column["name"] for column in inspect(engine).get_columns("complaints")}
-        additions = {
-            "image_filename": "VARCHAR(255)",
-            "detection_label": "VARCHAR(100)",
-            "detection_confidence": "DOUBLE PRECISION",
-            "latitude": "NUMERIC(10, 8)",
-            "longitude": "NUMERIC(11, 8)",
-        }
-        with engine.begin() as connection:
-            for column, column_type in additions.items():
-                if column not in existing_columns:
-                    connection.execute(text(f"ALTER TABLE complaints ADD COLUMN {column} {column_type}"))
+def initialize_database(migrate: bool | None = None) -> None:
+    # Containers migrate once in the entrypoint and set AUTO_MIGRATE=false so that
+    # several workers don't race each other; local development migrates on startup.
+    if migrate is None:
+        migrate = os.getenv("AUTO_MIGRATE", "true").lower() not in {"0", "false", "no"}
+    if migrate:
+        run_migrations()
 
     db: Session = SessionLocal()
     try:

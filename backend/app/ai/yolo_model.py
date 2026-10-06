@@ -1,14 +1,18 @@
 """Lazy YOLOv8 image detection service."""
 
+import os
 from pathlib import Path
 from threading import Lock
+
+# Fine-tuned civic weights from scripts/train_yolo.py, or the stock COCO model.
+WEIGHTS = os.getenv("YOLO_WEIGHTS", "yolov8n.pt")
 
 _model = None
 _model_lock = Lock()
 
 
 def _get_model():
-    """Load the pretrained model once, on the first detection request."""
+    """Load the model once, on the first detection request."""
     global _model
 
     if _model is None:
@@ -20,7 +24,7 @@ def _get_model():
                     raise RuntimeError(
                         "YOLO is not installed. Run: pip install -r requirements.txt"
                     ) from exc
-                _model = YOLO("yolov8n.pt")
+                _model = YOLO(WEIGHTS)
     return _model
 
 

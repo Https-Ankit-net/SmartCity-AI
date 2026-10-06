@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartCity AI — Modern Urban Governance Platform</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome / Lucide Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border-color: rgba(255, 255, 255, 0.1);
+      
+      --citizen-primary: #10b981;
+      --citizen-glow: rgba(16, 185, 129, 0.25);
+      --citizen-gradient: linear-gradient(135deg, #059669 0%, #10b981 50%, #06b6d4 100%);
+      
+      --dept-primary: #6366f1;
+      --dept-glow: rgba(99, 102, 241, 0.25);
+      --dept-gradient: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #3b82f6 100%);
+
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Ambient Animated Mesh Background Gradients */
+    .ambient-glow {
+      position: absolute;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(99, 102, 241, 0.15) 40%, transparent 70%);
+      filter: blur(80px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .grid-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 32px 32px;
+      z-index: 0;
+      pointer-events: none;
+      mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+    }
+
+    /* Navigation Bar */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      background: rgba(9, 13, 22, 0.8);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #10b981, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .brand-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff 30%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #34d399;
+      box-shadow: 0 0 10px #34d399;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .map-link-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    .map-link-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 48px 24px 80px 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Hero Banner */
+    .hero-header {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto 60px auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .hero-badge span {
+      background: linear-gradient(135deg, #34d399, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+
+    .hero-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 20px;
+    }
+
+    .hero-title .gradient-text {
+      background: linear-gradient(135deg, #10b981 0%, #38bdf8 50%, #6366f1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Two Portals Layout Grid */
+    .portals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 36px;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .portals-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Section Card */
+    .portal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 36px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .citizen-card::before {
+      background: var(--citizen-gradient);
+    }
+
+    .dept-card::before {
+      background: var(--dept-gradient);
+    }
+
+    .portal-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-4px);
+    }
+
+    .citizen-card:hover {
+      box-shadow: 0 25px 60px var(--citizen-glow);
+    }
+
+    .dept-card:hover {
+      box-shadow: 0 25px 60px var(--dept-glow);
+    }
+
+    /* Section Header */
+    .portal-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .portal-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .citizen-card .portal-avatar {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .dept-card .portal-avatar {
+      background: rgba(99, 102, 241, 0.15);
+      color: #818cf8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .portal-title-box h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .portal-title-box p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Features Checklist */
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    .feature-item i {
+      font-size: 14px;
+    }
+
+    .citizen-card .feature-item i { color: #34d399; }
+    .dept-card .feature-item i { color: #818cf8; }
+
+    /* Auth Tab Switcher */
+    .tab-switcher {
+      display: flex;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .citizen-card .tab-btn.active {
+      background: var(--citizen-gradient);
+      color: white;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .dept-card .tab-btn.active {
+      background: var(--dept-gradient);
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Auth Forms */
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .auth-form.hidden {
+      display: none;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      color: var(--text-dim);
+      font-size: 15px;
+      pointer-events: none;
+      transition: color 0.3s ease;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .input-field:focus {
+      border-color: rgba(255, 255, 255, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+    }
+
+    .citizen-card .input-field:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+    }
+
+    .dept-card .input-field:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    .citizen-card .input-wrapper:focus-within i { color: #10b981; }
+    .dept-card .input-wrapper:focus-within i { color: #6366f1; }
+
+    select.input-field {
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .select-arrow {
+      position: absolute;
+      right: 14px;
+      color: var(--text-dim);
+      pointer-events: none;
+      font-size: 12px;
+    }
+
+    /* Submit Action Buttons */
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      margin-top: 6px;
+    }
+
+    .citizen-card .submit-btn {
+      background: var(--citizen-gradient);
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    }
+
+    .citizen-card .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
+    }
+
+    .dept-card .submit-btn {
+      background: var(--dept-gradient);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+
+    .dept-card .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    /* Live Map Banner Card */
+    .map-banner {
+      margin-top: 60px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.7) 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 32px;
+      backdrop-filter: blur(16px);
+    }
+
+    @media (max-width: 768px) {
+      .map-banner {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    .map-banner-info h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .map-banner-info p {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 600px;
+    }
+
+    .map-btn-large {
+      padding: 16px 32px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .map-btn-large:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(37, 99, 235, 0.5);
+    }
+
+    /* Toast Notification Container */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast {
+      padding: 14px 20px;
+      border-radius: 12px;
+      background: #1e293b;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border-left: 4px solid #3b82f6;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.success { border-left-color: #10b981; }
+
+    .approval-hint { margin-top: 12px; font-size: 12px; color: var(--text-dim); display: flex; gap: 8px; align-items: flex-start; line-height: 1.5; }
+
+    .pending-notice {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-top: 16px;
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fde68a;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .pending-notice > i { font-size: 18px; margin-top: 2px; }
+    .pending-notice strong { display: block; color: #fef3c7; margin-bottom: 2px; }
+    .pending-notice p { margin: 0; color: #fcd34d; font-size: 13px; }
+    .pending-notice.hidden { display: none; }
+    .toast.error { border-left-color: #ef4444; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Glow Effects -->
+  <div class="ambient-glow"></div>
+  <div class="grid-pattern"></div>
+
+  <!-- Header Bar -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-city"></i>
+      </div>
+      <span class="brand-text">SmartCity AI</span>
+    </a>
+
+    <div class="nav-actions">
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span>Backend Online</span>
+      </div>
+      <a href="map.html" class="map-link-btn">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <span>Live Map</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    
+    <!-- Hero Header -->
+    <div class="hero-header">
+      <div class="hero-badge">
+        <i class="fa-solid fa-bolt"></i>
+        <span>AI-Powered Urban Governance Platform</span>
+      </div>
+      <h1 class="hero-title">
+        Smart City Management for <span class="gradient-text">Citizens & Departments</span>
+      </h1>
+      <p class="hero-subtitle">
+        Empowering residents to report issues effortlessly while providing municipal departments with AI automated routing, computer vision verification, and real-time GIS resolution workflows.
+      </p>
+    </div>
+
+    <!-- Dual Portals Layout Grid -->
+    <div class="portals-grid">
+
+      <!-- SECTION 1: CITIZEN PORTAL -->
+      <section class="portal-card citizen-card">
+        
+        <div class="portal-header">
+          <div class="portal-avatar">
+            <i class="fa-solid fa-user-group"></i>
+          </div>
+          <div class="portal-title-box">
+            <h2>Citizen Portal</h2>
+            <p>For city residents & community members</p>
+          </div>
+        </div>
+
+        <ul class="feature-list">
+          <li class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Report potholes, garbage & municipal issues instantly</span>
+          </li>
+          <li class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Auto-detect location via interactive map markers</span>
+          </li>
+          <li class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Track complaint status from submission to resolution</span>
+          </li>
+        </ul>
+
+        <!-- Tab Switcher -->
+        <div class="tab-switcher">
+          <button class="tab-btn active" onclick="switchTab('citizen', 'login')">Citizen Login</button>
+          <button class="tab-btn" onclick="switchTab('citizen', 'register')">Register Account</button>
+        </div>
+
+        <!-- Citizen Login Form -->
+        <form id="citizen-login-form" class="auth-form" onsubmit="handleAuth(event, 'citizen', 'login')">
+          <div class="input-group">
+            <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-at"></i>
+              <input type="email" id="citizen-login-email" class="input-field" placeholder="citizen@example.com" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fa-solid fa-lock"></i> Password</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-key"></i>
+              <input type="password" id="citizen-login-password" class="input-field" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="citizen-login-btn">
+            <span>Login to Citizen Portal</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+
+        <!-- Citizen Register Form -->
+        <form id="citizen-register-form" class="auth-form hidden" onsubmit="handleAuth(event, 'citizen', 'register')">
+          <div class="input-group">
+            <label><i class="fa-solid fa-user"></i> Full Name</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-id-badge"></i>
+              <input type="text" id="citizen-reg-name" class="input-field" placeholder="John Doe" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-at"></i>
+              <input type="email" id="citizen-reg-email" class="input-field" placeholder="john@example.com" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-mobile-screen"></i>
+              <input type="tel" id="citizen-reg-phone" class="input-field" placeholder="+1234567890">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fa-solid fa-lock"></i> Create Password</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-key"></i>
+              <input type="password" id="citizen-reg-password" class="input-field" placeholder="At least 8 characters" minlength="8" required>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="citizen-reg-btn">
+            <span>Create Citizen Account</span>
+            <i class="fa-solid fa-user-plus"></i>
+          </button>
+        </form>
+
+      </section>
+
+
+      <!-- SECTION 2: DEPARTMENT PORTAL -->
+      <section class="portal-card dept-card">
+        
+        <div class="portal-header">
+          <div class="portal-avatar">
+            <i class="fa-solid fa-building-shield"></i>
+          </div>
+          <div class="portal-title-box">
+            <h2>Department Portal</h2>
+            <p>For municipal officers & department staff</p>
+          </div>
+        </div>
+
+        <ul class="feature-list">
+          <li class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Auto-routed complaint queue & priority dispatch</span>
+          </li>
+          <li class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>YOLOv8 image verification & incident classification</span>
+          </li>
+          <li class="feature-item">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Update resolution status & monitor city analytics</span>
+          </li>
+        </ul>
+
+        <!-- Tab Switcher -->
+        <div class="tab-switcher">
+          <button class="tab-btn active" onclick="switchTab('dept', 'login')">Department Login</button>
+          <button class="tab-btn" onclick="switchTab('dept', 'register')">Register Staff</button>
+        </div>
+
+        <!-- Department Login Form -->
+        <form id="dept-login-form" class="auth-form" onsubmit="handleAuth(event, 'dept', 'login')">
+          <div class="input-group">
+            <label><i class="fa-solid fa-envelope"></i> Officer Email</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-building-user"></i>
+              <input type="email" id="dept-login-email" class="input-field" placeholder="officer@department.gov" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fa-solid fa-lock"></i> Password</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-key"></i>
+              <input type="password" id="dept-login-password" class="input-field" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="dept-login-btn">
+            <span>Login to Department Portal</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+
+        <!-- Department Staff Register Form -->
+        <form id="dept-register-form" class="auth-form hidden" onsubmit="handleAuth(event, 'dept', 'register')">
+          <div class="input-group">
+            <label><i class="fa-solid fa-user"></i> Staff Member Name</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-id-badge"></i>
+              <input type="text" id="dept-reg-name" class="input-field" placeholder="Officer Smith" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fa-solid fa-envelope"></i> Official Email</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-at"></i>
+              <input type="email" id="dept-reg-email" class="input-field" placeholder="smith@smartcity.gov" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fa-solid fa-building"></i> Select Department</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-sitemap"></i>
+              <select id="dept-reg-dept" class="input-field" required>
+                <option value="" disabled selected>Loading departments...</option>
+              </select>
+              <i class="fa-solid fa-chevron-down select-arrow"></i>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label><i class="fa-solid fa-lock"></i> Password</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-key"></i>
+              <input type="password" id="dept-reg-password" class="input-field" placeholder="At least 8 characters" minlength="8" required>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="dept-reg-btn">
+            <span>Register Department Account</span>
+            <i class="fa-solid fa-user-shield"></i>
+          </button>
+          <p class="approval-hint"><i class="fa-solid fa-circle-info"></i> Staff accounts are activated by a city administrator before first login.</p>
+        </form>
+
+        <div id="dept-pending-notice" class="pending-notice hidden" role="status">
+          <i class="fa-solid fa-hourglass-half"></i>
+          <div>
+            <strong>Request submitted</strong>
+            <p id="dept-pending-text">A city administrator will review your access request. You can log in once it is approved.</p>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- Live Map CTA Banner -->
+    <div class="map-banner">
+      <div class="map-banner-info">
+        <h3><i class="fa-solid fa-map-marked-alt"></i> Explore Live GIS Complaint Map</h3>
+        <p>View real-time geo-tagged complaints, active resolution teams, and city-wide status updates across all municipal wards.</p>
+      </div>
+      <a href="map.html" class="map-btn-large">
+        <span>Open Interactive Map</span>
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <script src="config.js"></script>
+  <script>
+    const API_BASE = `${SMARTCITY.API_BASE}/api`;
+
+    // Tab Switching Function
+    function switchTab(portal, tab) {
+      const loginForm = document.getElementById(`${portal}-login-form`);
+      const regForm = document.getElementById(`${portal}-register-form`);
+      const tabBtns = document.querySelectorAll(`.${portal}-card .tab-btn`);
+
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+        tabBtns[0].classList.add('active');
+        tabBtns[1].classList.remove('active');
+      } else {
+        loginForm.classList.add('hidden');
+        regForm.classList.remove('hidden');
+        tabBtns[0].classList.remove('active');
+        tabBtns[1].classList.add('active');
+      }
+    }
+
+    // Toast Notification System
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info');
+      // Messages can carry server text (e.g. an admin's rejection reason): insert as text, not HTML.
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span></span>`;
+      toast.querySelector('span').textContent = message;
+      
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Parse JWT payload without external libraries
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+          atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+        );
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Fetch Departments from API for Registration Dropdown
+    async function loadDepartments() {
+      const select = document.getElementById('dept-reg-dept');
+      try {
+        const response = await fetch(`${API_BASE}/departments`);
+        if (!response.ok) throw new Error('Failed to fetch departments');
+        const departments = await response.json();
+        
+        select.innerHTML = '<option value="" disabled selected>Select Municipal Department</option>';
+        departments.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.department_id;
+          opt.textContent = d.department_name;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        // Fallback if backend is not reachable
+        const defaultDepts = [
+          { id: 1, name: 'Fire Services' },
+          { id: 2, name: 'Traffic Police' },
+          { id: 3, name: 'Sanitation Department' },
+          { id: 4, name: 'Water Department' },
+          { id: 5, name: 'Electrical Department' },
+          { id: 6, name: 'Public Works Department' },
+          { id: 7, name: 'Municipal Control Room' }
+        ];
+        select.innerHTML = '<option value="" disabled selected>Select Municipal Department</option>';
+        defaultDepts.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = d.name;
+          select.appendChild(opt);
+        });
+      }
+    }
+
+    // Handle Auth Submission
+    async function handleAuth(event, portal, mode) {
+      event.preventDefault();
+
+      const role = portal === 'citizen' ? 'citizen' : 'department';
+
+      if (mode === 'register') {
+        const fullName = document.getElementById(`${portal}-reg-name`).value.trim();
+        const email = document.getElementById(`${portal}-reg-email`).value.trim();
+        const password = document.getElementById(`${portal}-reg-password`).value;
+        const rawPhone = portal === 'citizen' ? document.getElementById('citizen-reg-phone').value : null;
+        const phone = rawPhone && rawPhone.trim() !== '' ? rawPhone.trim() : null;
+        const deptId = portal === 'dept' ? parseInt(document.getElementById('dept-reg-dept').value, 10) || null : null;
+        if (portal === 'dept' && !deptId) {
+          showToast('Please choose the department you work for.', 'error');
+          return;
+        }
+
+        const btn = document.getElementById(`${portal}-reg-btn`);
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Creating Account...</span>';
+
+        try {
+          const res = await fetch(`${API_BASE}/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              full_name: fullName,
+              email: email,
+              password: password,
+              phone: phone,
+              role: role,
+              department_id: deptId
+            })
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            let errorMsg = 'Registration failed.';
+            if (typeof data.detail === 'string') {
+              errorMsg = data.detail;
+            } else if (Array.isArray(data.detail) && data.detail[0] && data.detail[0].msg) {
+              errorMsg = data.detail[0].msg;
+            }
+            throw new Error(errorMsg);
+          }
+
+          if (data.account_status === 'pending') {
+            // Department staff wait for an administrator before they can log in.
+            const deptName = document.getElementById('dept-reg-dept').selectedOptions[0]?.textContent || 'your department';
+            document.getElementById('dept-pending-text').textContent =
+              `A city administrator will review your request to join ${deptName}. You can log in with ${email} once it is approved.`;
+            document.getElementById('dept-pending-notice').classList.remove('hidden');
+            document.getElementById('dept-register-form').reset();
+            switchTab('dept', 'login');
+            document.getElementById('dept-login-email').value = email;
+            showToast('Access request submitted for approval.', 'success');
+            return;
+          }
+
+          showToast(`Account created successfully! Logging you in...`, 'success');
+
+          // Auto login after registration
+          await loginUser(email, password, portal);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = `<span>Register ${portal === 'citizen' ? 'Citizen' : 'Department'} Account</span> <i class="fa-solid fa-user-plus"></i>`;
+        }
+      } else {
+        // Login mode
+        const email = document.getElementById(`${portal}-login-email`).value;
+        const password = document.getElementById(`${portal}-login-password`).value;
+        
+        const btn = document.getElementById(`${portal}-login-btn`);
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Authenticating...</span>';
+
+        try {
+          await loginUser(email, password, portal);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = `<span>Login to ${portal === 'citizen' ? 'Citizen' : 'Department'} Portal</span> <i class="fa-solid fa-arrow-right"></i>`;
+        }
+      }
+    }
+
+    // Helper: Login API — stores token, user_id, and role
+    async function loginUser(email, password, portal) {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || 'Invalid email or password.');
+      }
+
+      // Store JWT token and role
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('role', data.role);
+
+      // Extract user_id from JWT payload
+      const payload = parseJwt(data.access_token);
+      if (payload && payload.sub) {
+        localStorage.setItem('user_id', payload.sub);
+      }
+      
+      showToast(`Welcome! Authenticated as ${data.role.toUpperCase()}`, 'success');
+
+      // Role-based redirect
+      setTimeout(() => {
+        if (data.role === 'department' || data.role === 'admin') {
+          window.location.href = 'admin_dashboard.html';
+        } else {
+          window.location.href = 'citizen_dashboard.html';
+        }
+      }, 1200);
+    }
+
+    // Check if already logged in — redirect away from login page
+    function checkExistingAuth() {
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+      if (token) {
+        const payload = parseJwt(token);
+        if (payload && payload.exp && payload.exp > Math.floor(Date.now() / 1000)) {
+          // Token is still valid, redirect
+          if (role === 'department' || role === 'admin') {
+            window.location.href = 'admin_dashboard.html';
+          } else {
+            window.location.href = 'citizen_dashboard.html';
+          }
+        } else {
+          // Token expired, clean up
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          localStorage.removeItem('user_id');
+        }
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      checkExistingAuth();
+      loadDepartments();
+    });
+  </script>
+</body>
+</html>

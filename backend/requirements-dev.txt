@@ -1,0 +1,4 @@
+# Test tooling (CI and local). Install with: pip install -r requirements.txt -r requirements-dev.txt
+pytest==8.4.2
+httpx==0.28.1
+fakeredis==2.39.0

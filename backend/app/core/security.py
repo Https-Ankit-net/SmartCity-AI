@@ -23,13 +23,22 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         # Existing users created before the bcrypt upgrade can still log in once.
         algorithm, salt_hex, digest_hex = hashed_password.split("$", 2)
         if algorithm != "scrypt":
-            return hmac.compare_digest(plain_password, hashed_password)
+            return False  # unknown format: never compare the stored value as a plaintext password
         candidate = hashlib.scrypt(
             plain_password.encode("utf-8"), salt=bytes.fromhex(salt_hex), n=2**14, r=8, p=1
         )
         return hmac.compare_digest(candidate.hex(), digest_hex)
     except (TypeError, ValueError):
         return False
+
+
+# A real bcrypt hash of a random string: login spends the same bcrypt time for unknown emails,
+# so response timing doesn't reveal which addresses are registered.
+_DUMMY_HASH = bcrypt.hashpw(b"timing-equaliser", bcrypt.gensalt()).decode("utf-8")
+
+
+def burn_password_check(plain_password: str) -> None:
+    bcrypt.checkpw(plain_password.encode("utf-8")[:72], _DUMMY_HASH.encode("utf-8"))
 
 
 def password_needs_rehash(password_hash: str) -> bool:
