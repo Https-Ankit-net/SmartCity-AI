@@ -169,14 +169,15 @@ jobs:
     name: Compose smoke test
     needs: [test, lint-config]
     runs-on: ubuntu-latest
+    # Every compose command (up, logs, down) needs the required variables.
+    env:
+      JWT_SECRET: ci-smoke-secret-ci-smoke-secret-ci-smoke
+      POSTGRES_PASSWORD: ci-smoke
+      HTTP_PORT: "8088"
+      WEB_CONCURRENCY: "2"
     steps:
       - uses: actions/checkout@v4
       - name: Start the stack
-        env:
-          JWT_SECRET: ci-smoke-secret-ci-smoke-secret-ci-smoke
-          POSTGRES_PASSWORD: ci-smoke
-          HTTP_PORT: "8088"
-          WEB_CONCURRENCY: "2"
         run: docker compose up -d --build --wait --wait-timeout 600
       - name: Check endpoints through nginx
         run: |

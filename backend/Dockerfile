@@ -26,6 +26,11 @@ COPY requirements.txt .
 RUN pip install --index-url https://download.pytorch.org/whl/cpu \
                 --extra-index-url https://pypi.org/simple \
                 -r requirements.txt
+# Ultralytics pulls in desktop OpenCV, which needs X11 libraries (libxcb…) a server image doesn't have.
+# Swap it for the headless build of the same version.
+RUN version="$(python -c 'import importlib.metadata as m; print(m.version("opencv-python"))')" \
+    && pip uninstall -y opencv-python \
+    && pip install "opencv-python-headless==${version}"
 
 # Bake the base YOLO weights into the image so containers never download at runtime.
 WORKDIR /opt/models
