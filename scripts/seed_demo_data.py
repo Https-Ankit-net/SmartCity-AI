@@ -226,7 +226,7 @@ def seed(db, password: str) -> dict:
             if admin:
                 user.reviewed_by_user_id, user.reviewed_at = admin.user_id, created + timedelta(hours=5)
 
-    photos = pick_photos(per_class=10)
+    photos = pick_photos(per_class=10) if TEST_IMAGES.is_dir() else {c: [] for c in CLASSES}
     photo_iter = {c: iter(v) for c, v in photos.items()}
     places = list(LOCALITIES.items())
 
@@ -364,8 +364,8 @@ def main() -> int:
         if args.remove:
             return 0
         if not TEST_IMAGES.is_dir():
-            print("datasets/civic is missing: build it with scripts/build_civic_dataset.py (photos come from its test split).")
-            return 1
+            print("datasets/civic is missing, so the complaints get no photos "
+                  "(build it with scripts/build_civic_dataset.py to include them).")
         summary = seed(db, os.getenv("DEMO_PASSWORD", "Demo@2026"))
     for key, value in summary.items():
         print(f"{key:>17}: {value}")

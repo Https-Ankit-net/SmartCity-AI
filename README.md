@@ -94,6 +94,8 @@ Then open `frontend/index.html` in a browser, either from disk or through any st
 
 ### Demo (presentation) mode
 
+Step-by-step instructions for every role (citizen, department staff, administrator), with screenshots: **[docs/USER_MANUAL.md](docs/USER_MANUAL.md)**.
+
 * **`start_demo.bat`** (double-click, Windows) starts the backend on port 8000, waits until it is healthy and opens `frontend/index.html`. Close the minimised "SmartCity AI backend" window to stop it.
 * **`scripts/seed_demo_data.py`** fills the database with realistic data: 12 citizens, 6 approved department staff plus 2 pending staff requests, and 45 complaints across Bhubaneswar over the last month (a mix of resolved, in-progress, pending, rejected and escalated, with status history, crowd confirmations and photos the civic model recognises). Stop the server first; the SQLite file is backed up to `backend/backups/` before anything changes. Demo accounts are `<first>.<last>@demo.example.com` with password `Demo@2026` (or `DEMO_PASSWORD`). Run it again to regenerate, or `--remove` to delete the demo data.
 
