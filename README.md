@@ -92,6 +92,15 @@ On startup the backend applies Alembic migrations and seeds the seven department
 
 Then open `frontend/index.html` in a browser, either from disk or through any static server. `frontend/config.js` points the pages at `http://127.0.0.1:8000`.
 
+### Demo (presentation) mode
+
+* **`start_demo.bat`** (double-click, Windows) starts the backend on port 8000, waits until it is healthy and opens `frontend/index.html`. Close the minimised "SmartCity AI backend" window to stop it.
+* **`scripts/seed_demo_data.py`** fills the database with realistic data: 12 citizens, 6 approved department staff plus 2 pending staff requests, and 45 complaints across Bhubaneswar over the last month (a mix of resolved, in-progress, pending, rejected and escalated, with status history, crowd confirmations and photos the civic model recognises). Stop the server first; the SQLite file is backed up to `backend/backups/` before anything changes. Demo accounts are `<first>.<last>@demo.example.com` with password `Demo@2026` (or `DEMO_PASSWORD`). Run it again to regenerate, or `--remove` to delete the demo data.
+
+```bash
+.venv/Scripts/python.exe scripts/seed_demo_data.py --replace-test-complaints   # from the repo root
+```
+
 Create the first administrator. Admins can't self-register:
 
 ```bash
