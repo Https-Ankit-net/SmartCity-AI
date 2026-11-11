@@ -25,7 +25,7 @@
 path: ../datasets/civic # dataset root
 train: images/train # training images, relative to path
 val: images/val # validation images, relative to path
-# test: images/test # optional held-out images
+test: images/test # held-out images (final evaluation only)
 
 # Class order is fixed: the backend maps these names to complaint categories.
 names:

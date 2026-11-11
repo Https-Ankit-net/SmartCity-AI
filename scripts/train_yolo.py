@@ -479,6 +479,8 @@ def validate_weights(
     project: Path,
     name: str,
     val_report: SplitReport,
+    split: str = "val",
+    plots: bool = False,
 ) -> dict[str, Any]:
     model = yolo_cls(str(weights))
     model_names = [model.names[i] for i in sorted(model.names)]
@@ -490,7 +492,7 @@ def validate_weights(
         )
     metrics = model.val(
         data=str(data_yaml),
-        split="val",
+        split=split,
         imgsz=args.imgsz,
         batch=args.batch if args.batch > 0 else DEFAULT_BATCH,
         device=device,
@@ -498,7 +500,7 @@ def validate_weights(
         project=str(project),
         name=name,
         exist_ok=True,
-        plots=False,
+        plots=plots,
         verbose=False,
     )
     box = metrics.box
@@ -516,12 +518,13 @@ def validate_weights(
         "overall": metric_row(box.mp, box.mr, box.map50, box.map, boxes=sum(counts)),
         "per_class": per_class,
         "val_dir": str(metrics.save_dir),
+        "split": split,
     }
 
 
 def print_metrics(summary: dict[str, Any]) -> None:
     header = f"{'class':<20} {'boxes':>6} {'precision':>10} {'recall':>8} {'mAP50':>8} {'mAP50-95':>9}"
-    print(f"\nValidation of {summary['weights']}")
+    print(f"\nEvaluation of {summary['weights']} on the {summary.get('split', 'val')} split")
     print(header)
     print("-" * len(header))
     for name in CLASSES:
@@ -571,11 +574,17 @@ def run_val_only(args: argparse.Namespace, dataset: Dataset, device: str) -> int
     weights = Path(resolve_model(args.model))
     if not weights.is_file():
         raise DatasetError(f"--val-only needs an existing weights file, got: {args.model}")
-    name = args.name or f"val-{weights.stem}"
+    if args.split not in dataset.reports:
+        raise DatasetError(f"the dataset YAML has no '{args.split}' split")
+    name = args.name or f"{args.split}-{weights.stem}"
     summary = validate_weights(
-        yolo_cls, weights, data_yaml, args, device, args.project, name, dataset.reports["val"]
+        yolo_cls, weights, data_yaml, args, device, args.project, name, dataset.reports[args.split],
+        split=args.split, plots=True,
     )
     print_metrics(summary)
+    out = Path(summary["val_dir"]) / "metrics.json"
+    out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    print(f"Metrics written to {out}")
     print(f"Validation outputs: {summary['val_dir']}")
     return 0
 
@@ -686,7 +695,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     add("--seed", type=int, default=0, help="random seed (default: %(default)s)")
     add("--export-to", type=Path, default=DEFAULT_EXPORT, help="where to copy best.pt (default: %(default)s)")
     add("--export-onnx", action="store_true", help="also export ONNX next to --export-to")
-    add("--val-only", action="store_true", help="only evaluate --model on the val split")
+    add("--val-only", action="store_true", help="only evaluate --model (on --split; saves plots + metrics.json)")
+    add("--split", choices=("val", "test"), default="val", help="split for --val-only (default: %(default)s)")
     add("--dry-run", action="store_true", help="check the dataset and print the plan; no training")
     args = parser.parse_args(argv)
 

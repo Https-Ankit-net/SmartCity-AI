@@ -4,8 +4,11 @@ import os
 from pathlib import Path
 from threading import Lock
 
-# Fine-tuned civic weights from scripts/train_yolo.py, or the stock COCO model.
-WEIGHTS = os.getenv("YOLO_WEIGHTS", "yolov8n.pt")
+# Which weights to load: YOLO_WEIGHTS if set; otherwise the fine-tuned civic model exported by
+# scripts/train_yolo.py when it exists (it is git-ignored, so fresh clones and CI don't have it);
+# otherwise the stock COCO model.
+CIVIC_WEIGHTS = Path(__file__).resolve().parent / "weights" / "civic-yolov8.pt"
+WEIGHTS = os.getenv("YOLO_WEIGHTS") or (str(CIVIC_WEIGHTS) if CIVIC_WEIGHTS.is_file() else "yolov8n.pt")
 
 _model = None
 _model_lock = Lock()
