@@ -6,7 +6,7 @@ RUN rm -f /etc/nginx/conf.d/default.conf
 COPY deployment/nginx/smartcity.conf /etc/nginx/conf.d/smartcity.conf
 
 # Only the pages the app uses; the empty Vite scaffold (src/, node_modules/) is not shipped.
-COPY frontend/index.html frontend/map.html frontend/citizen_dashboard.html frontend/admin_dashboard.html /usr/share/nginx/html/
+COPY frontend/index.html frontend/map.html frontend/citizen_dashboard.html frontend/admin_dashboard.html frontend/basemap.js /usr/share/nginx/html/
 # Same-origin API config replaces the development config.js.
 COPY deployment/nginx/config.js /usr/share/nginx/html/config.js
 
