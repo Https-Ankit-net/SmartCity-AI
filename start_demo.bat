@@ -10,6 +10,13 @@ if not exist "%PY%" (
   pause & exit /b 1
 )
 
+rem The fine-tuned civic detector is not in git; fetch it from the GitHub release on first start.
+if not exist "%~dp0backend\app\ai\weights\civic-yolov8.pt" (
+  echo Downloading the civic detector model ^(6 MB, first start only^)...
+  "%PY%" "%~dp0scripts\download_model.py"
+  if errorlevel 1 echo Continuing without it: photos will be analysed by the stock COCO model.
+)
+
 powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue) { exit 1 }"
 if errorlevel 1 (
   echo Port 8000 is already in use, so the backend is probably already running.

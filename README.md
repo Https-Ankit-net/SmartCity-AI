@@ -84,6 +84,10 @@ python -m venv .venv
 pip install --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple \
             -r requirements.txt -r requirements-dev.txt
 
+# Fine-tuned civic detector (6 MB, from the GitHub release "model-v1"; not stored in git).
+# Without it, photos are analysed by the stock COCO model, which cannot recognise civic issues.
+python ../scripts/download_model.py
+
 # Optional backend/.env: DATABASE_URL, JWT_SECRET, JWT_EXPIRE_MINUTES… (see the bottom of .env.example)
 uvicorn app.main:app --reload --port 8000
 ```
